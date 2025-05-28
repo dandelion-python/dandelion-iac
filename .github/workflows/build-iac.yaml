@@ -1,0 +1,29 @@
+name: Scan IaC
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  scan-iac:
+    runs-on: ubuntu-latest
+
+    steps:
+      # This step checks out a copy of your repository.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Scan IaC files
+        uses: sysdiglabs/scan-action@v5
+        with:
+          # API token for Sysdig Scanning auth
+          sysdig-secure-url: https://us2.app.sysdig.com
+          sysdig-secure-token: ${{ secrets.SECURE_API_TOKEN }}
+          stop-on-failed-policy-eval: true
+          stop-on-processing-error: true
+          # Execute in IaC scanning mode
+          mode: iac
+          recursive: true
+          iac-scan-path: .

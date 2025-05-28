@@ -1,0 +1,346 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dandelion
+  labels:
+    istio-injection: enabled
+---
+# Source: dandelion/charts/fluent-bit/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dandelion-fluent-bit
+  namespace: dandelion
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: dandelion/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dandelion
+---
+# Source: dandelion/charts/fluent-bit/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dandelion-fluent-bit
+  namespace: dandelion
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+data:
+  custom_parsers.conf: |
+    [PARSER]
+        Name docker_no_time
+        Format json
+        Time_Keep Off
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+    
+  fluent-bit.conf: |
+    [SERVICE]
+        Daemon Off
+        Flush 1
+        Log_Level info
+        Parsers_File /fluent-bit/etc/parsers.conf
+        Parsers_File /fluent-bit/etc/conf/custom_parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port 2020
+        Health_Check On
+    
+    [INPUT]
+        Name              tcp
+        Listen            0.0.0.0
+        Port              8080
+        Format            none
+    
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Merge_Log On
+        Keep_Log Off
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+    
+    [OUTPUT]
+        Name              stdout
+        Match             *
+---
+# Source: dandelion/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dandelion-config
+  labels:
+    app: dandelion
+data:
+  LOGGING_ENDPOINT: dandelion-fluent-bit
+  LOGGING_PORT: "8080"
+---
+# Source: dandelion/charts/fluent-bit/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dandelion-fluent-bit
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: dandelion/charts/fluent-bit/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dandelion-fluent-bit
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dandelion-fluent-bit
+subjects:
+  - kind: ServiceAccount
+    name: dandelion-fluent-bit
+    namespace: dandelion
+---
+# Source: dandelion/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dandelion
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+- kind: ServiceAccount
+  name: dandelion
+  namespace: dandelion
+---
+# Source: dandelion/charts/fluent-bit/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: dandelion-fluent-bit
+  namespace: dandelion
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 2020
+      targetPort: http
+      protocol: TCP
+      name: http
+    - name: tcp
+      targetPort: tcp
+      protocol: TCP
+      port: 8080
+  selector:
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+---
+# Source: dandelion/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: dandelion
+  labels:
+    app: dandelion
+  annotations:
+    {}
+spec:
+  type: ClusterIP
+  selector:
+    app: dandelion
+  ports:
+  - port: 8000
+    name: http
+    protocol: TCP
+    targetPort: http
+---
+# Source: dandelion/charts/fluent-bit/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dandelion-fluent-bit
+  namespace: dandelion
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: dandelion
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluent-bit
+      app.kubernetes.io/instance: dandelion
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluent-bit
+        app.kubernetes.io/instance: dandelion
+      annotations:
+        checksum/config: 304282fc520ac055fd61425954d447119f00ba102cc009a7678872d71d0b52ad
+    spec:
+      serviceAccountName: dandelion-fluent-bit
+      hostNetwork: false
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: fluent-bit
+          image: "cr.fluentbit.io/fluent/fluent-bit:3.2.1"
+          imagePullPolicy: IfNotPresent
+          command:
+            - /fluent-bit/bin/fluent-bit
+          args:
+            - --workdir=/fluent-bit/etc
+            - --config=/fluent-bit/etc/conf/fluent-bit.conf
+          ports:
+            - name: http
+              containerPort: 2020
+              protocol: TCP
+            - name: tcp
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+          volumeMounts:
+            - name: config
+              mountPath: /fluent-bit/etc/conf
+            - mountPath: /var/log
+              name: varlog
+            - mountPath: /var/lib/docker/containers
+              name: varlibdockercontainers
+              readOnly: true
+            - mountPath: /etc/machine-id
+              name: etcmachineid
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: dandelion-fluent-bit
+        - hostPath:
+            path: /var/log
+          name: varlog
+        - hostPath:
+            path: /var/lib/docker/containers
+          name: varlibdockercontainers
+        - hostPath:
+            path: /etc/machine-id
+            type: File
+          name: etcmachineid
+---
+# Source: dandelion/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dandelion
+  labels:
+    app: dandelion
+  annotations:
+    checksum/config: 7d7974762c47c70b63a701d049e36d8fc091cbbdd1ae88cfdda93aa284fbbfa0
+spec:
+  selector:
+    matchLabels:
+      app: dandelion
+  template:
+    metadata:
+      labels:
+        app: dandelion
+      annotations:
+        checksum/config: 7d7974762c47c70b63a701d049e36d8fc091cbbdd1ae88cfdda93aa284fbbfa0
+    spec:
+      serviceAccountName: dandelion
+      securityContext:
+      containers:
+      - name: dandelion-container
+        image: ghcr.io/dandelion-python/dandelion-python:master
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: dandelion-config
+---
+# Source: dandelion/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dandelion
+  annotations:
+    {}
+spec:
+  ingressClassName: default
+  rules:
+  - host: hostname.com
+    http:
+      paths:
+      - path: /
+        pathType: Exact
+        backend:
+          service:
+            name: dandelion
+            port:
+              name: http
+---
+# Source: dandelion/charts/fluent-bit/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "dandelion-fluent-bit-test-connection"
+  namespace: dandelion
+  labels:
+    helm.sh/chart: fluent-bit-0.48.2
+    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  containers:
+    - name: wget
+      image: "busybox:latest"
+      imagePullPolicy: Always
+      command: ["sh"]
+      args: ["-c", "wget -O- dandelion-fluent-bit:2020"]
+  restartPolicy: Never

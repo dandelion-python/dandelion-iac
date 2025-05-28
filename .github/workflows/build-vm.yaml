@@ -1,0 +1,39 @@
+name: Build and Scan
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      # This step checks out a copy of your repository.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t myregistry/my-vuln-application:latest .
+
+      - name: Scan my-vuln-application
+        uses: sysdiglabs/scan-action@v5
+        with:
+          # API token for Sysdig Scanning auth
+          sysdig-secure-url: https://us2.app.sysdig.com
+          sysdig-secure-token: ${{ secrets.SECURE_API_TOKEN }}
+          stop-on-failed-policy-eval: true
+          stop-on-processing-error: true
+          # Tag of the image to analyse
+          image-tag: myregistry/my-vuln-application:latest
+
+
+      - name: Upload SARIF file
+        if: success() || failure() # Upload results regardless previous step fails
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ github.workspace }}/sarif.json
+

@@ -1,0 +1,1023 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sysdig-agent
+---
+# Source: sysdig-deploy/charts/agent/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sysdig-agent-clustershield
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: sysdig-deploy/charts/agent/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+type: Opaque
+data:
+  access-key: "U1lTRElHX0FDQ0VTU19LRVk="
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sysdig-clustershield
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  
+  sysdig-access-key: U1lTRElHX0FDQ0VTU19LRVk=
+  sysdig-cluster-nats-password: U2VMY3M5OGp3cldHYkx4UzQ1bGU4T3c5d215TnRDSG4=
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/validatingwebhookconfiguration.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sysdig-clustershield-tls-certs
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZ0akNDQko2Z0F3SUJBZ0lSQVB2NWoyZ3lteGZDWFBJeVZLVVY0bFV3RFFZSktvWklodmNOQVFFTEJRQXcKSlRFak1DRUdBMVVFQXhNYWMzbHpaR2xuTFdGblpXNTBMV05zZFhOMFpYSnphR2xsYkdRd0hoY05NalV3TlRJMwpNVFV6TURBMFdoY05NelV3TlRJMU1UVXpNREEwV2pBbE1TTXdJUVlEVlFRREV4cHplWE5rYVdjdFlXZGxiblF0ClkyeDFjM1JsY25Ob2FXVnNaRENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFOeWgKQWlybGpMYndLeXFMY1VkbkFLSWZpOHZOeXdGVXUvNEFDVWJIYmdCbytyL1FJWEp5VmZzdm45WFB4N2FnUTZiUAptRVVQWlVDU25tWTNRNytvTkdhRHVxbVR3QzVFanpISEM5VWdQRGNxeUd4OTZkYjdCNFRrMklBNld4MTdFdFRHCmNwUU9UY1JMczM1ellhYllaOG1pS2lXYnFMNzRDb3crNEhURUl0TEVPOWNRWHhlTjF3YUYxbVlSTEEwZEJvTksKZjhhK2JBNlEvUWlMSnBKWXNIMTFGQ1FUNkhFa01OaVY0b2orUGVIK3FYN0FNeVorZjZoRzNGcUZJY1ovZnpXeApQNjc3WWRLb2puWUVvTXZ3YUoySnFUK1E1NmNST3BsRmljVzRKZVV5dys5L2x3SHFxVk1YNnozTXNzbnV5dVk2ClNUa0s4R3VHUHp4NnBUWXE5QkVDQXdFQUFhT0NBdDh3Z2dMYk1BNEdBMVVkRHdFQi93UUVBd0lGb0RBZEJnTlYKSFNVRUZqQVVCZ2dyQmdFRkJRY0RBUVlJS3dZQkJRVUhBd0l3REFZRFZSMFRBUUgvQkFJd0FEQ0NBcG9HQTFVZApFUVNDQXBFd2dnS05nZ2xzYjJOaGJHaHZjM1NDR25ONWMyUnBaeTFoWjJWdWRDMWpiSFZ6ZEdWeWMyaHBaV3hrCmdod3FMbk41YzJScFp5MWhaMlZ1ZEMxamJIVnpkR1Z5YzJocFpXeGtnaTBxTG5ONWMyUnBaeTFoWjJWdWRDMWoKYkhWemRHVnljMmhwWld4a0xuTjVjMlJwWnkxaFoyVnVkQzV6ZG1PQ0szTjVjMlJwWnkxaFoyVnVkQzFqYkhWegpkR1Z5YzJocFpXeGtMbk41YzJScFp5MWhaMlZ1ZEM1emRtT0NPeW91YzNselpHbG5MV0ZuWlc1MExXTnNkWE4wClpYSnphR2xsYkdRdWMzbHpaR2xuTFdGblpXNTBMbk4yWXk1amJIVnpkR1Z5TG14dlkyRnNnamx6ZVhOa2FXY3QKWVdkbGJuUXRZMngxYzNSbGNuTm9hV1ZzWkM1emVYTmthV2N0WVdkbGJuUXVjM1pqTG1Oc2RYTjBaWEl1Ykc5agpZV3lDS25ONWMyUnBaeTFoWjJWdWRDMWpiSFZ6ZEdWeWMyaHBaV3hrTFdOc2RYTjBaWEl0YzJOaGJtNWxjb0lzCktpNXplWE5rYVdjdFlXZGxiblF0WTJ4MWMzUmxjbk5vYVdWc1pDMWpiSFZ6ZEdWeUxYTmpZVzV1WlhLQ1BTb3UKYzNselpHbG5MV0ZuWlc1MExXTnNkWE4wWlhKemFHbGxiR1F0WTJ4MWMzUmxjaTF6WTJGdWJtVnlMbk41YzJScApaeTFoWjJWdWRDNXpkbU9DTzNONWMyUnBaeTFoWjJWdWRDMWpiSFZ6ZEdWeWMyaHBaV3hrTFdOc2RYTjBaWEl0CmMyTmhibTVsY2k1emVYTmthV2N0WVdkbGJuUXVjM1pqZ2tzcUxuTjVjMlJwWnkxaFoyVnVkQzFqYkhWemRHVnkKYzJocFpXeGtMV05zZFhOMFpYSXRjMk5oYm01bGNpNXplWE5rYVdjdFlXZGxiblF1YzNaakxtTnNkWE4wWlhJdQpiRzlqWVd5Q1NYTjVjMlJwWnkxaFoyVnVkQzFqYkhWemRHVnljMmhwWld4a0xXTnNkWE4wWlhJdGMyTmhibTVsCmNpNXplWE5rYVdjdFlXZGxiblF1YzNaakxtTnNkWE4wWlhJdWJHOWpZV3lIQkg4QUFBRXdEUVlKS29aSWh2Y04KQVFFTEJRQURnZ0VCQUdONEljZHEyMERPLzBzS0Nkamo4TERLdjBpSURkY1p2c0NYTFg0enVwSWQ2TVh6KzNmbwpSVFpSYWluMDIzcldEZWQxbC9HcElKRTF3VG9qeDB4L0ZjeVBWTjNheGpWN0NVMkxBQXptKy9GWkEraUxISmtBClhjN2M2ckh1VGtQVHhGZVF5TzZiVHFCcVdpd3ZiOWN1VERzMGliUDFqTlcwdkN4OWp0enA5ZmNiNzEvSHVtZU4KcGhYN29tT21xU3NQRVhsMnppRXZHc0Y1bFlpbVJ4U3BaUzduR0ZZNDNBN3FTTUJ1T1cvSnZTZ01lc2VUeVdxcApHY0JlaCtHRTE4aHMwaEhrc3VCbXVyc2Q0VmR0ai9UOXlzMXhOdit1dFQ5eCszTlNyelBnVDRTMU00SkN4Rk1vClJjNDdwZW1yai9tekZDQkJpcTBBeWJhUTgyM0N6TXlLcXRjPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBM0tFQ0t1V010dkFyS290eFIyY0FvaCtMeTgzTEFWUzcvZ0FKUnNkdUFHajZ2OUFoCmNuSlYreStmMWMvSHRxQkRwcytZUlE5bFFKS2VaamREdjZnMFpvTzZxWlBBTGtTUE1jY0wxU0E4TnlySWJIM3AKMXZzSGhPVFlnRHBiSFhzUzFNWnlsQTVOeEV1emZuTmhwdGhueWFJcUpadW92dmdLakQ3Z2RNUWkwc1E3MXhCZgpGNDNYQm9YV1poRXNEUjBHZzBwL3hyNXNEcEQ5Q0lzbWtsaXdmWFVVSkJQb2NTUXcySlhpaVA0OTRmNnBmc0F6CkpuNS9xRWJjV29VaHhuOS9OYkUvcnZ0aDBxaU9kZ1NneS9Cb25ZbXBQNURucHhFNm1VV0p4YmdsNVRMRDczK1gKQWVxcFV4ZnJQY3l5eWU3SzVqcEpPUXJ3YTRZL1BIcWxOaXIwRVFJREFRQUJBb0lCQUFicytmV3hRMy9KbmIxRgo1ODRyUGxLWWhXbW1JZUYra0xFcVBLQlBhZFZTOWs0WG9Ua252Q200cHI2T09YRnk2ZlMrVHdRWjlkNTNTOGdmCkkzNE1jR3FvWjI5anp6UlVuQjhlcGJFd3hCc2lPV3pvYmZMODZkRkM0c1h4cndNSHBrRnVJbEloK2RCMzVPQkwKREcxeG5SNXYrLzAydSs4VXQ3WUwwajF3Rzd5OGM4ejFYa3k2WDFnT1RqU1hOZEh2TnE2WERxNW5pay85dVBvTwpFMkpSVGVkUEJLY0dqOFYwSWpYV3I2RzBXZXZ6ZG40QTBybUFPeGh0SDdEV1NSVFhJQUFUNmdIaHVzZlhIcXR6CmluNHlKR2pCZGFZK25jTFZWR1VyM244UUxGbi9mbnhLbjRERnFHck5OTDdKeUc2ZlFNU1hHRFNENzBCeldoSGIKRjNiVDFnMENnWUVBOG9LTmp5ZDZ3WC9VcUswUlFFc1ZUb0dDdm5BNldWUTJQMVIzTloyVC9hVUZKZ2xzeEtGVwpKOXNTVU13WFBIcnhDL3JxdFh4eU1uOENjRUU2YWQ5bHYxMTZQa3ZjVkNnU2ZSQlJXaUJJY3NPKzRTS1ZDNFB5CnQwc1B5RFNtVTlpWHNnY2k0ZkRoRnE3Lzk3cy8wYVJIeGQ1eERPVldhbjVPWEhydDE1ZHplY1VDZ1lFQTZPYmMKTUZXSVE3dVBSSkhuMG5xaE10SVBSZlprSUxrcS9mRHI2VEVvMS9uandXenBMZk9Yc3BKUzB3empFZXBKa2dJNQpRd04rVGtMM3NSTEsvakhNeGZLcktGeVhCY0YreEFUa2Q1T0hoL3dYVXFaRW45SjQyNGdxU1hZYmtZSEFqeFo3CjU1SC9VSEh1QW9GbFQ5aXlFOFBFU0puK3g0VU5BNnpYbE9yZDBkMENnWUVBMHl6bWNrdFJ0U0JJb2QyYlVSNVEKM24wZXloRFdicVZMVzlpRXVsYU80V2dLMUxXT1ZxZWJhN2R6K3BIT2hpY1VzbmI4WGErUmpmRlZ3VVM3eGlmMwo1UzFVWHQwV2J0NDZRMWVyVDgwZTZYa1ZSZDBrWnRPdXp2ZjVOVURMdWVXNUt4alZ3bVJNemNEME90aCsyV0t4CjhWY2pvTFF3alNtUnVTeCs0cWNLc25VQ2dZQko1WVlUcCsvV1hkcDFUVDRhNEdIcE9CRTBoNXI1YndjZkQ2UXEKbHpoNFhvZFBSZmt1WlUzS2tQYktsQm93QXdCWTNXL0J2WWdEMk9leVBWNC9EUm9GN0pzMThUclJ6clVrQ05GYwp4MmlIVXdzclpDbjk4OC81QjlreStkQ0JlSVBhWXEzcHFiOHlqUk9Sby9DN1J1d3ByVUhJTDJSUmRmdk5JTGcrClBjOG4yUUtCZ1FDWnNRQU9mRU94eGxlc1R6OXNDbUtHWXpXVUpaYW9LcVNsTFVSdG4xREw1cTRWcU9veDd4anoKK1BUSURyTFBpNW5wRjd5cDB3Z0dLV3c2cERjWVhXemdSWkxVeDl2Y2xUM05PNmVmSHBIb3F0U29QRVZCY3o2SQpFQTBUNzVDd0VDVXhZTUJmVG9kTlFkR0VUUExiaGN3MTJzRnVKN2RSbnAvS2owYlYrbXZRZHc9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUROVENDQWgyZ0F3SUJBZ0lRYTFNdkJuUnRTUnFZNCtYWWRhMzhLVEFOQmdrcWhraUc5dzBCQVFzRkFEQWwKTVNNd0lRWURWUVFERXhwemVYTmthV2N0WVdkbGJuUXRZMngxYzNSbGNuTm9hV1ZzWkRBZUZ3MHlOVEExTWpjeApOVE13TURSYUZ3MHpOVEExTWpVeE5UTXdNRFJhTUNVeEl6QWhCZ05WQkFNVEduTjVjMlJwWnkxaFoyVnVkQzFqCmJIVnpkR1Z5YzJocFpXeGtNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXYzeVUKdG5UR0hpU0Y4V3ZSNUJzdEtlRFp3MEduMnV3NjBxZjN4bE9icjc3a3IrTVBjcFVjZ0NFaGJRbjFFcG9WTTBKNApPUU5BYTd5YS9oczFtdkFUMmFnZDRZZTFFM0pIdFFEMjBONnA0TDNwSGdBTWRXdnB2cVdQbWQ3bERTcHNpQUY5ClY3NXpQTVE1cU9SNmxXK1VpZVJpQkd5RWFrMmVRRHN2UU1QcDlFejRaaGlObmFETk9JL2tQMUdteXJEbFM1azcKUU1adXlNM0VJMmVXRlpwWUJGaXdxeGxPTDJrbjBsb0lXYXp3MEN4bnYydjhEUXpEZGJoSkhNb1E4TjBGWGhPVApWQTlYM1hrZzZhcU9oelE0Z0cxa25oUENWdG5FWXY1YWkwUDZjMWNRNE9ZUzgxc2Z6T2hzSmhYZ211N0kwcEExCkovNys0N2t2czdKS0cveHcyd0lEQVFBQm8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FxUXdIUVlEVlIwbEJCWXcKRkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRQpGSDZVWjFuMXlmTzZGWEtEek9uaDhRV0RnQ0laTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFDcWRSK2ZubjAwCnRQVklBaDVzZUdvNkFmL1BTbzRTUU5ydmVXbzJjZTNTZTNjMXBoRXhTK2E3Zjd5OXBFWlY2c2wvVWVOcmppbFcKRzZIbElQR3crallkNS9od0U2SXNOQmVlNUlBbU5nMWl1VTJZMFg0bU1JWGZ5OWdydUtZR0dFelJrcHk3RnYwbQppRCtuUnJHVVhhWjNRVkFPalhLSDBCTGo1aFNNZHd6VkNlbWt0bldWZWh2Z1NmdGZ6RGVRYStZTFlpZjkzZWV3CnBkRWlVY1hXRld5MVdjQ1BnUlR1RkFsTXBQb216K1RoWFhXa2p2a0RFN084Tzd4c24rNHhVK1JvYUtoVGd3cUcKeFJhZENwZzNOR3NjSW85aXdWRXVHWTlQOFpGL3dPdzRDU2srMkhFc0xMRmllckNrREdFSTVKQ0ZHUGl6eERJTApLQm92aTh4eFZ4TnMKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+---
+# Source: sysdig-deploy/charts/agent/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+data:
+  dragent.yaml: |
+    new_k8s: true
+    k8s_cluster_name: SYSDIG_CLUSTER_NAME
+    collector: ingest-us2.app.sysdig.com
+    sysdig_api_endpoint: us2.app.sysdig.com
+    security:
+      enabled: true
+      k8s_audit_server_enabled: true
+      k8s_audit_server_port: 7765
+      k8s_audit_server_url: 0.0.0.0
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sysdig-clustershield
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  cluster-shield.yaml: |
+    cluster_config:
+      name: SYSDIG_CLUSTER_NAME
+      tags: {}
+    cluster_scanner:
+      image_sbom_extractor:
+        nats_url: nats://sysdig-agent-clustershield-cluster-scanner:4222
+      leader_election_lock_name: sysdig-agent-clustershield
+    features:
+      admission_control:
+        container_vulnerability_management:
+          enabled: false
+        dry_run: true
+        enabled: true
+        excluded_namespaces: []
+        failure_policy: Ignore
+        http_port: 8443
+        timeout: 5
+      audit:
+        enabled: true
+        excluded_namespaces: []
+        http_port: 6443
+        timeout: 5
+        webhook_rules:
+        - apiGroups:
+          - ""
+          - apps
+          - autoscaling
+          - batch
+          - networking.k8s.io
+          - rbac.authorization.k8s.io
+          - extensions
+          apiVersions:
+          - '*'
+          operations:
+          - '*'
+          resources:
+          - '*/*'
+          scope: '*'
+      container_vulnerability_management:
+        enabled: true
+        in_use:
+          enabled: true
+          integration_enabled: false
+        local_cluster:
+          registry_secrets: []
+        platform_services_enabled: true
+        registry_ssl:
+          verify: true
+      kubernetes_metadata:
+        enabled: false
+      posture:
+        enabled: true
+    kubernetes:
+      ca_cert_file: /cert/ca.crt
+      running_namespace: sysdig-agent
+      tls_cert_file: /cert/tls.crt
+      tls_private_key_file: /cert/tls.key
+    log_level: warn
+    monitoring_port: 8080
+    ssl:
+      verify: true
+    sysdig_endpoint:
+      region: us2
+---
+# Source: sysdig-deploy/charts/agent/templates/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - replicationcontrollers
+      - services
+      - endpoints
+      - events
+      - limitranges
+      - namespaces
+      - nodes
+      - nodes/metrics
+      - nodes/proxy
+      - resourcequotas
+      - persistentvolumes
+      - persistentvolumeclaims
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+    - /metrics
+    verbs:
+    - get
+  - apiGroups:
+    - storage.k8s.io
+    resources:
+    - storageclasses
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - certificates.k8s.io
+    resources:
+    - certificatesigningrequests
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - policy
+    resources:
+    - poddisruptionbudgets
+    verbs:
+    - get
+    - list
+    - watch
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sysdig-agent-clustershield
+rules:
+- apiGroups: ["", "apps", "batch", "extensions"]
+  resources:
+    - "cronjobs"
+    - "daemonsets"
+    - "deployments"
+    - "jobs"
+    - "namespaces"
+    - "nodes"
+    - "pods"
+    - "replicasets"
+    - "replicationcontrollers"
+    - "secrets"
+    - "statefulsets"
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+    - ""
+  resourceNames:
+    - kube-system
+  resources:
+    - namespaces
+  verbs:
+    - get
+- apiGroups:
+    - ""
+  resources:
+    - pods
+  verbs:
+    - get
+- apiGroups:
+    - "apps"
+  resources:
+    - deployments
+    - replicasets
+    - statefulsets
+    - daemonsets
+  verbs:
+    - get
+- apiGroups:
+    - ""
+    - rbac.authorization.k8s.io
+    - extensions
+    - apps
+    - batch
+    - networking.k8s.io
+    - autoscaling
+    - policy
+    - storage.k8s.io
+    - config.openshift.io
+  resources:
+    - pods
+    - pods/log
+    - namespaces
+    - deployments
+    - daemonsets
+    - statefulsets
+    - jobs
+    - cronjobs
+    - clusterroles
+    - clusterrolebindings
+    - roles
+    - rolebindings
+    - services
+    - serviceaccounts
+    - nodes
+    - ingresses
+    - ingressclasses
+    - networkpolicies
+    - replicasets
+    - configmaps
+    - events
+    - limitranges
+    - persistentvolumes
+    - persistentvolumeclaims
+    - replicationcontrollers
+    - resourcequotas
+    - controllerrevisions
+    - horizontalpodautoscalers
+    - podsecuritypolicies
+    - storageclasses
+    - volumeattachments
+    - clusterversions
+    - secrets
+  verbs: ["get", "list", "watch"]
+---
+# Source: sysdig-deploy/charts/agent/templates/clusterrolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+subjects:
+  - kind: ServiceAccount
+    name: sysdig-agent
+    namespace: sysdig-agent
+roleRef:
+  kind: ClusterRole
+  name: sysdig-agent
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sysdig-agent-clustershield
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sysdig-agent-clustershield
+subjects:
+  - kind: ServiceAccount
+    namespace: sysdig-agent
+    name: sysdig-agent-clustershield
+---
+# Source: sysdig-deploy/charts/agent/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+rules:
+- apiGroups:
+    - coordination.k8s.io
+  resources:
+    - leases
+  verbs:
+    - create
+    - get
+    - list
+    - update
+    - watch
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sysdig-agent-clustershield
+  namespace: sysdig-agent
+rules:
+- apiGroups: ["", "coordination.k8s.io"]
+  resources:
+    - "leases"
+  resourceNames:
+    - sysdig-agent-clustershield
+  verbs: ["*"]
+- apiGroups: ["", "coordination.k8s.io"]
+  resources:
+    - "leases"
+  verbs: ["create"]
+- apiGroups: ["*"]
+  resources:
+    - "endpoints"
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["*"]
+  resources:
+    - "endpoints"
+    # Following is required for OpenShift. See https://docs.openshift.com/container-platform/3.11/architecture/core_concepts/pods_and_services.html#endpoints
+    - "endpoints/restricted"
+  resourceNames:
+    - sysdig-agent-clustershield-cluster-scanner
+  verbs: ["*"]
+---
+# Source: sysdig-deploy/charts/agent/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sysdig-agent
+subjects:
+  - kind: ServiceAccount
+    name: sysdig-agent
+    namespace: sysdig-agent
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sysdig-agent-clustershield
+  namespace: sysdig-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sysdig-agent-clustershield
+subjects:
+  - kind: ServiceAccount
+    namespace: sysdig-agent
+    name: sysdig-agent-clustershield
+---
+# Source: sysdig-deploy/charts/agent/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+spec:
+  selector:
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+  ports:
+  - protocol: TCP
+    port: 7765
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/service-cluster-scanner.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sysdig-agent-clustershield-cluster-scanner
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4222
+      targetPort: 4222
+      protocol: TCP
+      name: nats
+    - port: 9999
+      targetPort: 9999
+      protocol: TCP
+      name: grpc
+  # NOTE: selector is intentionally left empty, the RSI component will implement a controller to handle the Endpoints resource associated with this service
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sysdig-agent-clustershield
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: monitoring
+      protocol: TCP
+      name: monitoring
+    - port: 8443
+      targetPort: admission
+      protocol: TCP
+      name: admission
+    - port: 6443
+      targetPort: audit
+      protocol: TCP
+      name: audit
+  selector:
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+---
+# Source: sysdig-deploy/charts/agent/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: sysdig-agent
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/name: agent
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+    app: "sysdig-agent"
+    
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agent
+      app.kubernetes.io/instance: sysdig-agent
+  template:
+    metadata:
+      name: sysdig-agent
+      labels:
+        
+        helm.sh/chart: agent-1.35.3
+        app.kubernetes.io/name: agent
+        app.kubernetes.io/instance: sysdig-agent
+        app.kubernetes.io/version: "13.7.2"
+        app.kubernetes.io/managed-by: Helm
+        app: "sysdig-agent"
+        
+        
+      
+      
+    spec:
+      serviceAccountName: sysdig-agent
+      tolerations:
+        
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/controlplane
+          operator: Equal
+          value: "true"
+        - effect: NoExecute
+          key: node-role.kubernetes.io/etcd
+          operator: Equal
+          value: "true"
+        - effect: NoExecute
+          key: CriticalAddonsOnly
+          operator: Equal
+          value: "true"
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostPID: true
+      terminationGracePeriodSeconds: 5
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                  - amd64
+                  - arm64
+                  - s390x
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                  - linux
+      
+      initContainers:
+        - name: sysdig-agent-kmodule
+          image: quay.io/sysdig/agent-kmodule:13.7.2
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            runAsNonRoot: false
+            runAsGroup: 0
+            runAsUser: 0
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+              
+            limits:
+              cpu: 250m
+              memory: 248Mi
+            requests:
+              cpu: 0
+              memory: 0
+          env:
+          volumeMounts:
+            - mountPath: /etc/modprobe.d
+              name: modprobe-d
+              readOnly: true
+            - mountPath: /host/boot
+              name: boot-vol
+              readOnly: true
+            - mountPath: /host/etc
+              name: etc-vol
+              readOnly: true
+            - mountPath: /host/lib/modules
+              name: modules-vol
+              readOnly: true
+            - mountPath: /host/usr
+              name: usr-vol
+              readOnly: true
+      containers:
+        - name: sysdig
+          image: quay.io/sysdig/agent-slim:13.7.2
+          imagePullPolicy: IfNotPresent
+          resources:
+            
+            limits:
+              cpu: 1
+              memory: 1Gi
+            requests:
+              cpu: 0
+              memory: 0
+          securityContext:
+            
+            privileged: true
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: K8S_NODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          readinessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 24483
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 9
+          volumeMounts:
+            - mountPath: /host/dev
+              name: dev-vol
+              readOnly: false
+            - mountPath: /host/usr
+              name: usr-vol
+              readOnly: true
+            - mountPath: /host/proc
+              name: proc-vol
+              readOnly: true
+            - mountPath: /host/run
+              name: run-vol
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /opt/draios/etc/kubernetes/config
+              name: sysdig-agent-config
+            - mountPath: /opt/draios/etc/kubernetes/secrets
+              name: sysdig-agent-secrets
+            - mountPath: /etc/podinfo
+              name: podinfo
+            - mountPath: /host/etc
+              name: etc-vol
+              readOnly: true
+            - mountPath: /host/var/lib
+              name: varlib-vol
+            - mountPath: /host/var/data
+              name: vardata-vol
+            - mountPath: /host/var/run
+              name: varrun-vol
+      volumes:
+        - name: dev-vol
+          hostPath:
+            path: /dev
+        - name: usr-vol
+          hostPath:
+            path: /usr
+        - name: proc-vol
+          hostPath:
+            path: /proc
+        - name: run-vol
+          hostPath:
+            path: /run
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: sysdig-agent-config
+          configMap:
+            name: sysdig-agent
+            optional: true
+        - name: sysdig-agent-secrets
+          secret:
+            secretName: sysdig-agent
+        - name: podinfo
+          downwardAPI:
+            defaultMode: 420
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+              path: name
+        - name: modprobe-d
+          hostPath:
+            path: /etc/modprobe.d
+        - name: boot-vol
+          hostPath:
+            path: /boot
+        - name: modules-vol
+          hostPath:
+            path: /lib/modules
+        - name: varrun-vol
+          hostPath:
+            path: /var/run
+        - name: etc-vol
+          hostPath:
+            path: /etc
+        - name: varlib-vol
+          hostPath:
+            path: /var/lib
+        - name: vardata-vol
+          hostPath:
+            path: /var/data
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sysdig-agent-clustershield
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: clusterShield-1.8.0
+    app.kubernetes.io/name: clustershield
+    app.kubernetes.io/instance: sysdig-agent
+    app.kubernetes.io/version: "1.8.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clustershield
+      app.kubernetes.io/instance: sysdig-agent
+  template:
+    metadata:
+      annotations:
+        checksum/webhook: "63c719e28a3abee6d14ca35593b10fdf1d75382124510f5ee99d23cd8ac4a103"
+      labels:
+        helm.sh/chart: clusterShield-1.8.0
+        app.kubernetes.io/name: clustershield
+        app.kubernetes.io/instance: sysdig-agent
+        app.kubernetes.io/version: "1.8.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      
+      serviceAccountName: sysdig-agent-clustershield
+      containers:
+        - name: "cluster-shield"
+          securityContext:
+            privileged: true
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: true
+          image: "quay.io/sysdig/cluster-shield:1.8.0"
+          imagePullPolicy: IfNotPresent
+          args: [ "run-all-namespaced" ]
+          ports:
+            - name: monitoring
+              containerPort: 8080
+              protocol: TCP
+            - name: admission
+              containerPort: 8443
+              protocol: TCP
+            - name: audit
+              containerPort: 6443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: monitoring
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: monitoring
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            {}
+          volumeMounts:
+            - mountPath: /etc/sysdig/config/
+              name: cluster-shield
+            - mountPath: /etc/sysdig/secret-files/sysdig-clustershield
+              name: secret-sysdig-clustershield
+            - name: cert
+              mountPath: /cert
+              readOnly: true
+          env:
+            - name: KUBE_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KUBE_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: KUBE_SERVICE_NAME
+              value: sysdig-agent-clustershield-cluster-scanner
+      volumes:
+        - name: cluster-shield
+          configMap:
+            name: sysdig-clustershield
+        - name: secret-sysdig-clustershield
+          secret:
+            secretName: sysdig-clustershield
+        - name: cert
+          secret:
+            secretName: sysdig-clustershield-tls-certs
+# Source: sysdig-deploy/charts/clusterShield/templates/secrets.yaml
+---
+# Source: sysdig-deploy/charts/clusterShield/templates/validatingwebhookconfiguration.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: sysdig-agent-clustershield
+webhooks:
+  - name: audit.secure.sysdig.com
+    matchPolicy: Equivalent
+    
+    rules:
+    - apiGroups:
+      - ""
+      - apps
+      - autoscaling
+      - batch
+      - networking.k8s.io
+      - rbac.authorization.k8s.io
+      - extensions
+      apiVersions:
+      - '*'
+      operations:
+      - '*'
+      resources:
+      - '*/*'
+      scope: '*'
+    clientConfig:
+      service:
+        namespace: sysdig-agent
+        name: sysdig-agent-clustershield
+        path: /k8s-audit
+        port: 6443
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUROVENDQWgyZ0F3SUJBZ0lRYTFNdkJuUnRTUnFZNCtYWWRhMzhLVEFOQmdrcWhraUc5dzBCQVFzRkFEQWwKTVNNd0lRWURWUVFERXhwemVYTmthV2N0WVdkbGJuUXRZMngxYzNSbGNuTm9hV1ZzWkRBZUZ3MHlOVEExTWpjeApOVE13TURSYUZ3MHpOVEExTWpVeE5UTXdNRFJhTUNVeEl6QWhCZ05WQkFNVEduTjVjMlJwWnkxaFoyVnVkQzFqCmJIVnpkR1Z5YzJocFpXeGtNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXYzeVUKdG5UR0hpU0Y4V3ZSNUJzdEtlRFp3MEduMnV3NjBxZjN4bE9icjc3a3IrTVBjcFVjZ0NFaGJRbjFFcG9WTTBKNApPUU5BYTd5YS9oczFtdkFUMmFnZDRZZTFFM0pIdFFEMjBONnA0TDNwSGdBTWRXdnB2cVdQbWQ3bERTcHNpQUY5ClY3NXpQTVE1cU9SNmxXK1VpZVJpQkd5RWFrMmVRRHN2UU1QcDlFejRaaGlObmFETk9JL2tQMUdteXJEbFM1azcKUU1adXlNM0VJMmVXRlpwWUJGaXdxeGxPTDJrbjBsb0lXYXp3MEN4bnYydjhEUXpEZGJoSkhNb1E4TjBGWGhPVApWQTlYM1hrZzZhcU9oelE0Z0cxa25oUENWdG5FWXY1YWkwUDZjMWNRNE9ZUzgxc2Z6T2hzSmhYZ211N0kwcEExCkovNys0N2t2czdKS0cveHcyd0lEQVFBQm8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FxUXdIUVlEVlIwbEJCWXcKRkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRQpGSDZVWjFuMXlmTzZGWEtEek9uaDhRV0RnQ0laTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFDcWRSK2ZubjAwCnRQVklBaDVzZUdvNkFmL1BTbzRTUU5ydmVXbzJjZTNTZTNjMXBoRXhTK2E3Zjd5OXBFWlY2c2wvVWVOcmppbFcKRzZIbElQR3crallkNS9od0U2SXNOQmVlNUlBbU5nMWl1VTJZMFg0bU1JWGZ5OWdydUtZR0dFelJrcHk3RnYwbQppRCtuUnJHVVhhWjNRVkFPalhLSDBCTGo1aFNNZHd6VkNlbWt0bldWZWh2Z1NmdGZ6RGVRYStZTFlpZjkzZWV3CnBkRWlVY1hXRld5MVdjQ1BnUlR1RkFsTXBQb216K1RoWFhXa2p2a0RFN084Tzd4c24rNHhVK1JvYUtoVGd3cUcKeFJhZENwZzNOR3NjSW85aXdWRXVHWTlQOFpGL3dPdzRDU2srMkhFc0xMRmllckNrREdFSTVKQ0ZHUGl6eERJTApLQm92aTh4eFZ4TnMKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+    timeoutSeconds: 5
+    failurePolicy: Ignore
+  - name: vac.secure.sysdig.com
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - sysdig-agent
+    rules:
+      - apiGroups:
+          - ""
+          - apps
+          - batch
+        apiVersions: [ "v1" ]
+        operations: [ "CREATE", "UPDATE" ]
+        resources:
+          - "deployments"
+          - "replicasets"
+          - "statefulsets"
+          - "daemonsets"
+          - "jobs"
+          - "cronjobs"
+        scope: "Namespaced"
+    clientConfig:
+      service:
+        namespace: sysdig-agent
+        name: sysdig-agent-clustershield
+        path: /validate
+        port: 8443
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUROVENDQWgyZ0F3SUJBZ0lRYTFNdkJuUnRTUnFZNCtYWWRhMzhLVEFOQmdrcWhraUc5dzBCQVFzRkFEQWwKTVNNd0lRWURWUVFERXhwemVYTmthV2N0WVdkbGJuUXRZMngxYzNSbGNuTm9hV1ZzWkRBZUZ3MHlOVEExTWpjeApOVE13TURSYUZ3MHpOVEExTWpVeE5UTXdNRFJhTUNVeEl6QWhCZ05WQkFNVEduTjVjMlJwWnkxaFoyVnVkQzFqCmJIVnpkR1Z5YzJocFpXeGtNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXYzeVUKdG5UR0hpU0Y4V3ZSNUJzdEtlRFp3MEduMnV3NjBxZjN4bE9icjc3a3IrTVBjcFVjZ0NFaGJRbjFFcG9WTTBKNApPUU5BYTd5YS9oczFtdkFUMmFnZDRZZTFFM0pIdFFEMjBONnA0TDNwSGdBTWRXdnB2cVdQbWQ3bERTcHNpQUY5ClY3NXpQTVE1cU9SNmxXK1VpZVJpQkd5RWFrMmVRRHN2UU1QcDlFejRaaGlObmFETk9JL2tQMUdteXJEbFM1azcKUU1adXlNM0VJMmVXRlpwWUJGaXdxeGxPTDJrbjBsb0lXYXp3MEN4bnYydjhEUXpEZGJoSkhNb1E4TjBGWGhPVApWQTlYM1hrZzZhcU9oelE0Z0cxa25oUENWdG5FWXY1YWkwUDZjMWNRNE9ZUzgxc2Z6T2hzSmhYZ211N0kwcEExCkovNys0N2t2czdKS0cveHcyd0lEQVFBQm8yRXdYekFPQmdOVkhROEJBZjhFQkFNQ0FxUXdIUVlEVlIwbEJCWXcKRkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRQpGSDZVWjFuMXlmTzZGWEtEek9uaDhRV0RnQ0laTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFDcWRSK2ZubjAwCnRQVklBaDVzZUdvNkFmL1BTbzRTUU5ydmVXbzJjZTNTZTNjMXBoRXhTK2E3Zjd5OXBFWlY2c2wvVWVOcmppbFcKRzZIbElQR3crallkNS9od0U2SXNOQmVlNUlBbU5nMWl1VTJZMFg0bU1JWGZ5OWdydUtZR0dFelJrcHk3RnYwbQppRCtuUnJHVVhhWjNRVkFPalhLSDBCTGo1aFNNZHd6VkNlbWt0bldWZWh2Z1NmdGZ6RGVRYStZTFlpZjkzZWV3CnBkRWlVY1hXRld5MVdjQ1BnUlR1RkFsTXBQb216K1RoWFhXa2p2a0RFN084Tzd4c24rNHhVK1JvYUtoVGd3cUcKeFJhZENwZzNOR3NjSW85aXdWRXVHWTlQOFpGL3dPdzRDU2srMkhFc0xMRmllckNrREdFSTVKQ0ZHUGl6eERJTApLQm92aTh4eFZ4TnMKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    admissionReviewVersions: [ "v1", "v1beta1" ]
+    sideEffects: None
+    timeoutSeconds: 5
+    failurePolicy: Ignore
+---
+# Source: sysdig-deploy/charts/agent/templates/tests/test-rollout.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "sysdig-agent-test-rollout"
+  namespace: sysdig-agent
+  labels:
+    helm.sh/chart: agent-1.35.3
+    app.kubernetes.io/version: "13.7.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  serviceAccountName: sysdig-agent
+  containers:
+    - name: kubectl
+      image: bitnami/kubectl:1.32.1
+      imagePullPolicy: IfNotPresent
+      command:
+      - kubectl
+      args:
+      - rollout
+      - status
+      - daemonset/sysdig-agent
+      - -n
+      - sysdig-agent
+      - -w
+      - --timeout=300s
+  restartPolicy: Never
