@@ -21,6 +21,7 @@ spec:
       labels:
         app: sish
     spec:
+      serviceAccountName: default
       containers:
       - name: nix
         image: nixos/nix
